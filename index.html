@@ -3,16 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Verifikasi Akses Super Ketat</title>
+    <title>Sistem Proteksi Akses Perangkat</title>
     <style>
-        /* Proteksi total agar teks tidak bisa diblok atau ditekan lama di HP */
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
+        /* Desain minimalis untuk memblokir tampilan Laptop */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f9;
@@ -21,192 +14,59 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            text-align: center;
         }
-        .box {
+        .error-box {
             background: white;
-            padding: 35px;
+            padding: 40px 30px;
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            text-align: center;
             max-width: 360px;
-            width: 100%;
-        }
-        h2 { color: #1a73e8; font-size: 20px; margin-bottom: 8px; }
-        p { color: #5f6368; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
-        input[type="email"] {
             width: 90%;
-            padding: 12px;
-            margin-bottom: 15px;
-            border: 1px solid #dadce0;
-            border-radius: 6px;
-            font-size: 15px;
-            -webkit-user-select: text; /* Kolom ini tetap bisa diketik */
-            user-select: text;
+            display: none; /* Sembunyikan secara bawaan, hanya muncul di laptop */
         }
-        button {
-            background: #1a73e8;
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 6px;
-            width: 97%;
-            font-weight: bold;
-            font-size: 15px;
-            cursor: pointer;
-        }
-        button:disabled { background: #b8d2f7; cursor: not-allowed; }
-        button:hover:not(:disabled) { background: #1557b0; }
-        .error {
-            color: #d93025;
-            font-size: 13px;
-            font-weight: bold;
-            margin-top: 12px;
-            display: none;
-            line-height: 1.4;
-        }
+        h2 { color: #d93025; font-size: 22px; margin-top: 15px; }
+        p { color: #5f6368; font-size: 14px; line-height: 1.5; }
     </style>
 </head>
-<body oncontextmenu="return false;" onkeydown="return false;">
+<body>
 
-<div class="box">
-    <div style="font-size: 50px; margin-bottom: 10px;">🔒</div>
-    <h2>Verifikasi Akses</h2>
-    <p>Gunakan <b>Handphone</b> dan masukkan email terdaftar Anda. Akses akan langsung diarahkan ke aplikasi resmi Google Drive.</p>
-    
-    <input type="email" id="emailUser" placeholder="Contoh: nama@gmail.com" required>
-    <button id="btnMasuk" onclick="cekAkses()">Buka Aplikasi Drive</button>
-    <div class="error" id="msgError"></div>
+<div class="error-box" id="laptopBlocker">
+    <div style="font-size: 60px;">🚫</div>
+    <h2>Akses Ditolak!</h2>
+    <p>Demi keamanan data, perangkat Komputer atau Laptop <b>dilarang keras</b> mengakses folder ini. Silakan gunakan Handphone Anda.</p>
 </div>
 
 <script>
-    // ================= CONFIGURATION =================
-    // 1. TEMPELKAN URL WEB APP DARI GOOGLE APPS SCRIPT ANDA DI SINI
-    const urlDatabaseSheets = "PASTE_URL_WEB_APP_ANDA_DISINI";
-    
     // ID Folder Google Drive Anda
     const folderId = "1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
-    // =================================================
 
-    // DAFTAR EMAIL TERVERIFIKASI
-    const daftarEmail = [
-        "rizkiade912@gmail.com",
-        "aprinanierta@gmail.com",
-        "arsylamawar5@gmail.com",
-        "ayundariayundari76@gmail.com",
-        "bahriansyah0808@gmail.com",
-        "efriyenineti@gmail.com",
-        "erselaseptia@gmail.com",
-        "ervinanr89@gmail.com",
-        "evidewisartika610@gmail.com",
-        "ftiya2016@gmail.com",
-        "handayanirika946@gmail.com",
-        "intanmayangsari624@gmail.com",
-        "kurniawandavid83560@gmail.com",
-        "likaapriliaa27@gmail.com",
-        "mronaldiansyah22222@gmail.com",
-        "nurbaiti924783@gmail.com",
-        "oppoaxakuy@gmail.com",
-        "pirlianda.25@admin.sd.belajar.id",
-        "riameliza3@gmail.com",
-        "rikeutari72@gmail.com",
-        "s99883240@gmail.com",
-        "sitimasna03@gmail.com",
-        "suharmis001@gmail.com",
-        "rizkiade791@gmail.com"
-    ];
-
-    // Deteksi ketat tipe sistem operasi HP pengguna
+    // Deteksi tipe sistem operasi perangkat
     const ua = navigator.userAgent;
     const isAndroid = /Android/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const isLaptop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 
-    // Fungsi utama pemaksa pembukaan aplikasi internal, BUKAN halaman web browser
-    function paksaBukaAplikasi() {
+    // Jalankan sistem proteksi saat halaman dimuat
+    (function proteksiDanArahkan() {
+        const webFallback = `https://google.com{folderId}`;
+
         if (isAndroid) {
-            // Menggunakan Android Intent resmi untuk memanggil ID Package Google Drive
-            window.location.href = `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;end;`;
+            // HP Android: Paksa panggil aplikasi Google Drive via Deep Link Intent
+            const androidIntent = `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;S.browser_fallback_url=${encodeURIComponent(webFallback)};end;`;
+            window.location.replace(androidIntent);
         } else if (isIOS) {
-            // Menggunakan skema URL iOS untuk memicu aplikasi eksternal Google Drive
-            window.location.href = `googledrive://drive/folders/${folderId}`;
+            // HP iPhone/iPad: Panggil skema aplikasi Google Drive iOS
+            window.location.replace(`googledrive://drive/folders/${folderId}`);
             
-            // Cadangan jika aplikasi iOS tidak merespon dalam 1.5 detik
+            // Cadangan jika aplikasi Drive tidak terinstal di iPhone, lempar ke Safari
             setTimeout(function() {
-                window.location.href = `https://apple.com`;
-            }, 1500);
+                window.location.replace(webFallback);
+            }, 1000);
         } else {
-            alert("Aplikasi Google Drive tidak terdeteksi pada perangkat ini.");
+            // Jika Perangkat berupa Laptop, Komputer, atau Mac: Kunci halaman!
+            document.getElementById("laptopBlocker").style.display = "block";
         }
-    }
-
-    function cekAkses() {
-        const input = document.getElementById("emailUser").value.trim().toLowerCase();
-        const error = document.getElementById("msgError");
-        const btn = document.getElementById("btnMasuk");
-
-        error.style.display = "none";
-
-        if (!input) {
-            error.innerText = "❌ Silakan masukkan email Anda.";
-            error.style.display = "block";
-            return;
-        }
-
-        if (isLaptop) {
-            error.innerText = "❌ Akses Ditolak! Komputer/Laptop dilarang mengakses folder ini.";
-            error.style.display = "block";
-            return;
-        }
-
-        if (!daftarEmail.includes(input)) {
-            error.innerText = "❌ Email tidak terdaftar! Anda tidak memiliki izin.";
-            error.style.display = "block";
-            return;
-        }
-
-        btn.innerText = "Memverifikasi...";
-        btn.disabled = true;
-
-        // Ambil IP Publik pengguna
-        fetch('https://ipify.org')
-            .then(res => {
-                if (!res.ok) throw new Error();
-                return res.json();
-            })
-            .then(ipData => {
-                const currentIP = ipData.ip;
-
-                // Kirim data ke Google Sheets Web App Anda
-                return fetch(urlDatabaseSheets, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
-                    body: JSON.stringify({ email: input, ip: currentIP })
-                });
-            })
-            .then(res => res.json())
-            .then(hasil => {
-                btn.innerText = "Buka Aplikasi Drive";
-                btn.disabled = false;
-
-                if (hasil.status === "success") {
-                    if (hasil.message !== "Log In Berhasil") {
-                        alert(hasil.message);
-                    }
-                    
-                    // PANGGIL FUNGSI PAKSA BUKA APLIKASI DRIVE
-                    paksaBukaAplikasi();
-                } else {
-                    error.innerText = hasil.message;
-                    error.style.display = "block";
-                }
-            })
-            .catch(err => {
-                btn.innerText = "Buka Aplikasi Drive";
-                btn.disabled = false;
-                error.innerText = "❌ Gagal terhubung ke server sistem. Pastikan internet aktif dan coba lagi.";
-                error.style.display = "block";
-            });
-    }
+    })();
 </script>
 </body>
 </html>
