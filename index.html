@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Perangkat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            max-width: 400px;
+        }
+        h1 { color: #d9534f; font-size: 22px; }
+        p { color: #333; font-size: 16px; line-height: 1.5; }
+        .icon { font-size: 50px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="content">
+    <div class="icon">🔄</div>
+    <p>Memeriksa perangkat Anda, mohon tunggu...</p>
+</div>
+
+<script>
+    // Link folder Google Drive Anda sudah terpasang otomatis di bawah ini
+    const linkGoogleDrive = "https://drive.google.com/drive/folders/1YEnx_bsrPNTCcbIKLWIiTfBCwT_yck4v?usp=sharing";
+
+    // Sistem mendeteksi jenis perangkat pengakses
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+        // Jika HP: Langsung alihkan ke Google Drive Anda
+        window.location.href = linkGoogleDrive;
+    } else {
+        // Jika Laptop/PC: Tampilkan pesan blokir
+        document.getElementById('content').innerHTML = `
+            <div class="icon">❌</div>
+            <h1>Akses Ditolak!</h1>
+            <p>Folder ini <b>hanya dapat diakses melalui Handphone (HP)</b>. Silakan scan ulang atau buka link ini kembali menggunakan smartphone Anda.</p>
+        `;
+    }
+</script>
+
+</body>
+</html>
