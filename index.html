@@ -3,56 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifikasi Perangkat</title>
+    <title>Sistem Verifikasi Akses Super Ketat</title>
     <style>
+        /* Proteksi total agar teks tidak bisa diblok atau ditekan lama di HP */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f0f4f9;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            text-align: center;
         }
-        .container {
+        .box {
             background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            max-width: 400px;
+            padding: 35px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            max-width: 360px;
+            width: 100%;
         }
-        h1 { color: #d9534f; font-size: 22px; }
-        p { color: #333; font-size: 16px; line-height: 1.5; }
-        .icon { font-size: 50px; margin-bottom: 10px; }
+        h2 { color: #1a73e8; font-size: 20px; margin-bottom: 8px; }
+        p { color: #5f6368; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+        input[type="email"] {
+            width: 90%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #dadce0;
+            border-radius: 6px;
+            font-size: 15px;
+            -webkit-user-select: text; /* Kolom ini tetap bisa diketik */
+            user-select: text;
+        }
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            width: 97%;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button:hover { background: #1557b0; }
+        .error {
+            color: #d93025;
+            font-size: 13px;
+            font-weight: bold;
+            margin-top: 12px;
+            display: none;
+            line-height: 1.4;
+        }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;" onkeydown="return false;">
 
-<div class="container" id="content">
-    <div class="icon">🔄</div>
-    <p>Memeriksa perangkat Anda, mohon tunggu...</p>
+<div class="box">
+    <div style="font-size: 50px; margin-bottom: 10px;">🔒</div>
+    <h2>Verifikasi Akses</h2>
+    <p>Gunakan <b>Handphone</b> dan masukkan email terdaftar Anda. Akses akan dikunci permanen pada perangkat pertama yang masuk.</p>
+    
+    <input type="email" id="emailUser" placeholder="Contoh: nama@gmail.com" required>
+    <button onclick="cekAkses()">Buka Aplikasi Drive</button>
+    <div class="error" id="msgError"></div>
 </div>
 
 <script>
-    // Link folder Google Drive Anda sudah terpasang otomatis di bawah ini
-    const linkGoogleDrive = "https://drive.google.com/drive/folders/1YEnx_bsrPNTCcbIKLWIiTfBCwT_yck4v?usp=sharing";
+    // 1. DAFTAR EMAIL ANDA SUDAH RAPI DAN TERPASANG DI SINI
+    const daftarEmail = [
+        "rizkiade912@gmail.com",
+        "aprinanierta@gmail.com",
+        "arsylamawar5@gmail.com",
+        "ayundariayundari76@gmail.com",
+        "bahriansyah0808@gmail.com",
+        "efriyenineti@gmail.com",
+        "erselaseptia@gmail.com",
+        "ervinanr89@gmail.com",
+        "evidewisartika610@gmail.com",
+        "ftiya2016@gmail.com",
+        "handayanirika946@gmail.com",
+        "intanmayangsari624@gmail.com",
+        "kurniawandavid83560@gmail.com",
+        "likaapriliaa27@gmail.com",
+        "mronaldiansyah22222@gmail.com",
+        "nurbaiti924783@gmail.com",
+        "oppoaxakuy@gmail.com",
+        "pirlianda.25@admin.sd.belajar.id",
+        "riameliza3@gmail.com",
+        "rikeutari72@gmail.com",
+        "s99883240@gmail.com",
+        "sitimasna03@gmail.com",
+        "suharmis001@gmail.com",
+        "rizkiade791@gmail.com" // Email ujung tanpa koma, sudah benar sesuai aturan
+    ];
 
-    // Sistem mendeteksi jenis perangkat pengakses
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // 2. LINK FOLDER GOOGLE DRIVE TERKUNCI ANDA
+    const linkDrive = "https://drive.google.com/drive/folders/1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
 
-    if (isMobile) {
-        // Jika HP: Langsung alihkan ke Google Drive Anda
-        window.location.href = linkGoogleDrive;
-    } else {
-        // Jika Laptop/PC: Tampilkan pesan blokir
-        document.getElementById('content').innerHTML = `
-            <div class="icon">❌</div>
-            <h1>Akses Ditolak!</h1>
-            <p>Folder ini <b>hanya dapat diakses melalui Handphone (HP)</b>. Silakan scan ulang atau buka link ini kembali menggunakan smartphone Anda.</p>
-        `;
+    // 3. DETEKSI PERANGKAT LAPTOP
+    const isLaptop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    function cekAkses() {
+        const input = document.getElementById("emailUser").value.trim().toLowerCase();
+        const error = document.getElementById("msgError");
+
+        // Blokir jika pengguna memakai laptop
+        if (isLaptop) {
+            error.innerText = "❌ Akses Ditolak! Komputer/Laptop dilarang mengakses folder ini.";
+            error.style.display = "block";
+            return;
+        }
+
+        // Validasi apakah email terdaftar di sistem
+        if (!daftarEmail.includes(input)) {
+            error.innerText = "❌ Email tidak terdaftar! Anda tidak memiliki izin.";
+            error.style.display = "block";
+            return;
+        }
+
+        // AMBIL ALAMAT IP DAN KUNCI PERANGKAT
+        fetch('https://ipify.org')
+            .then(response => response.json())
+            .then(data => {
+                const currentIP = data.ip;
+                const savedEmail = localStorage.getItem("locked_email");
+                const savedIP = localStorage.getItem("locked_ip");
+
+                if (!savedEmail) {
+                    // JIKA PERTAMA KALI MASUK: Kunci email di HP ini secara permanen
+                    localStorage.setItem("locked_email", input);
+                    localStorage.setItem("locked_ip", currentIP);
+                    
+                    alert("✅ Perangkat Terverifikasi! Email ini sekarang telah dikunci khusus untuk HP Anda.");
+                    window.location.href = linkDrive;
+                } else {
+                    // JIKA SUDAH PERNAH MASUK SEBELUMNYA: Cek kecocokan kunci lokal HP
+                    if (savedEmail === input) {
+                        window.location.href = linkDrive;
+                    } else {
+                        // Blokir jika HP ini mencoba memasukkan email orang lain yang bukan miliknya
+                        error.innerText = "❌ Akses Ditolak! HP Anda telah terkunci dengan akun email lain.";
+                        error.style.display = "block";
+                    }
+                }
+            })
+            .catch(() => {
+                // Cadangan validasi perangkat lokal jika koneksi API IP melambat
+                const savedEmail = localStorage.getItem("locked_email");
+                if (!savedEmail) {
+                    localStorage.setItem("locked_email", input);
+                    window.location.href = linkDrive;
+                } else if (savedEmail === input) {
+                    window.location.href = linkDrive;
+                } else {
+                    error.innerText = "❌ Akses Ditolak! Perangkat tidak cocok.";
+                    error.style.display = "block";
+                }
+            });
     }
 </script>
-
 </body>
 </html>
