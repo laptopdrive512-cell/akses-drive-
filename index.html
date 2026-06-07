@@ -54,7 +54,8 @@
             font-size: 15px;
             cursor: pointer;
         }
-        button:hover { background: #1557b0; }
+        button:disabled { background: #b8d2f7; cursor: not-allowed; }
+        button:hover:not(:disabled) { background: #1557b0; }
         .error {
             color: #d93025;
             font-size: 13px;
@@ -70,15 +71,23 @@
 <div class="box">
     <div style="font-size: 50px; margin-bottom: 10px;">🔒</div>
     <h2>Verifikasi Akses</h2>
-    <p>Gunakan <b>Handphone</b> dan masukkan email terdaftar Anda. Akses akan dikunci permanen pada perangkat pertama yang masuk.</p>
+    <p>Gunakan <b>Handphone</b> dan masukkan email terdaftar Anda. Akses akan langsung diarahkan ke aplikasi resmi Google Drive.</p>
     
     <input type="email" id="emailUser" placeholder="Contoh: nama@gmail.com" required>
-    <button onclick="cekAkses()">Buka Aplikasi Drive</button>
+    <button id="btnMasuk" onclick="cekAkses()">Buka Aplikasi Drive</button>
     <div class="error" id="msgError"></div>
 </div>
 
 <script>
-    // 1. DAFTAR EMAIL ANDA SUDAH RAPI DAN TERPASANG DI SINI
+    // ================= CONFIGURATION =================
+    // 1. TEMPELKAN URL WEB APP DARI GOOGLE APPS SCRIPT ANDA DI SINI
+    const urlDatabaseSheets = "PASTE_URL_WEB_APP_ANDA_DISINI";
+    
+    // ID Folder Google Drive Anda
+    const folderId = "1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
+    // =================================================
+
+    // DAFTAR EMAIL TERVERIFIKASI
     const daftarEmail = [
         "rizkiade912@gmail.com",
         "aprinanierta@gmail.com",
@@ -103,71 +112,99 @@
         "s99883240@gmail.com",
         "sitimasna03@gmail.com",
         "suharmis001@gmail.com",
-        "rizkiade791@gmail.com" // Email ujung tanpa koma, sudah benar sesuai aturan
+        "rizkiade791@gmail.com"
     ];
 
-    // 2. LINK FOLDER GOOGLE DRIVE TERKUNCI ANDA
-    const linkDrive = "https://drive.google.com/drive/folders/1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
+    // Deteksi ketat tipe sistem operasi HP pengguna
+    const ua = navigator.userAgent;
+    const isAndroid = /Android/i.test(ua);
+    const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const isLaptop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
 
-    // 3. DETEKSI PERANGKAT LAPTOP
-    const isLaptop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    // Fungsi utama pemaksa pembukaan aplikasi internal, BUKAN halaman web browser
+    function paksaBukaAplikasi() {
+        if (isAndroid) {
+            // Menggunakan Android Intent resmi untuk memanggil ID Package Google Drive
+            window.location.href = `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;end;`;
+        } else if (isIOS) {
+            // Menggunakan skema URL iOS untuk memicu aplikasi eksternal Google Drive
+            window.location.href = `googledrive://drive/folders/${folderId}`;
+            
+            // Cadangan jika aplikasi iOS tidak merespon dalam 1.5 detik
+            setTimeout(function() {
+                window.location.href = `https://apple.com`;
+            }, 1500);
+        } else {
+            alert("Aplikasi Google Drive tidak terdeteksi pada perangkat ini.");
+        }
+    }
 
     function cekAkses() {
         const input = document.getElementById("emailUser").value.trim().toLowerCase();
         const error = document.getElementById("msgError");
+        const btn = document.getElementById("btnMasuk");
 
-        // Blokir jika pengguna memakai laptop
+        error.style.display = "none";
+
+        if (!input) {
+            error.innerText = "❌ Silakan masukkan email Anda.";
+            error.style.display = "block";
+            return;
+        }
+
         if (isLaptop) {
             error.innerText = "❌ Akses Ditolak! Komputer/Laptop dilarang mengakses folder ini.";
             error.style.display = "block";
             return;
         }
 
-        // Validasi apakah email terdaftar di sistem
         if (!daftarEmail.includes(input)) {
             error.innerText = "❌ Email tidak terdaftar! Anda tidak memiliki izin.";
             error.style.display = "block";
             return;
         }
 
-        // AMBIL ALAMAT IP DAN KUNCI PERANGKAT
-        fetch('https://ipify.org')
-            .then(response => response.json())
-            .then(data => {
-                const currentIP = data.ip;
-                const savedEmail = localStorage.getItem("locked_email");
-                const savedIP = localStorage.getItem("locked_ip");
+        btn.innerText = "Memverifikasi...";
+        btn.disabled = true;
 
-                if (!savedEmail) {
-                    // JIKA PERTAMA KALI MASUK: Kunci email di HP ini secara permanen
-                    localStorage.setItem("locked_email", input);
-                    localStorage.setItem("locked_ip", currentIP);
-                    
-                    alert("✅ Perangkat Terverifikasi! Email ini sekarang telah dikunci khusus untuk HP Anda.");
-                    window.location.href = linkDrive;
-                } else {
-                    // JIKA SUDAH PERNAH MASUK SEBELUMNYA: Cek kecocokan kunci lokal HP
-                    if (savedEmail === input) {
-                        window.location.href = linkDrive;
-                    } else {
-                        // Blokir jika HP ini mencoba memasukkan email orang lain yang bukan miliknya
-                        error.innerText = "❌ Akses Ditolak! HP Anda telah terkunci dengan akun email lain.";
-                        error.style.display = "block";
-                    }
-                }
+        // Ambil IP Publik pengguna
+        fetch('https://ipify.org')
+            .then(res => {
+                if (!res.ok) throw new Error();
+                return res.json();
             })
-            .catch(() => {
-                // Cadangan validasi perangkat lokal jika koneksi API IP melambat
-                const savedEmail = localStorage.getItem("locked_email");
-                if (!savedEmail) {
-                    localStorage.setItem("locked_email", input);
-                    window.location.href = linkDrive;
-                } else if (savedEmail === input) {
-                    window.location.href = linkDrive;
+            .then(ipData => {
+                const currentIP = ipData.ip;
+
+                // Kirim data ke Google Sheets Web App Anda
+                return fetch(urlDatabaseSheets, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ email: input, ip: currentIP })
+                });
+            })
+            .then(res => res.json())
+            .then(hasil => {
+                btn.innerText = "Buka Aplikasi Drive";
+                btn.disabled = false;
+
+                if (hasil.status === "success") {
+                    if (hasil.message !== "Log In Berhasil") {
+                        alert(hasil.message);
+                    }
+                    
+                    // PANGGIL FUNGSI PAKSA BUKA APLIKASI DRIVE
+                    paksaBukaAplikasi();
                 } else {
-                    error.innerText = "❌ Akses Ditolak! Perangkat tidak cocok.";
+                    error.innerText = hasil.message;
                     error.style.display = "block";
                 }
+            })
+            .catch(err => {
+                btn.innerText = "Buka Aplikasi Drive";
+                btn.disabled = false;
+                error.innerText = "❌ Gagal terhubung ke server sistem. Pastikan internet aktif dan coba lagi.";
+                error.style.display = "block";
             });
     }
 </script>
