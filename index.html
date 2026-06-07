@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Proteksi Akses Perangkat</title>
     <style>
-        * {
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f9;
@@ -35,20 +28,27 @@
         h2 { color: #1a73e8; font-size: 20px; margin-top: 15px; margin-bottom: 8px; }
         .error-box h2 { color: #d93025; }
         p { color: #5f6368; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
-        button {
+        
+        /* Optimasi tombol khusus HP agar responsif saat disentuh */
+        .btn-drive {
             background: #1a73e8;
             color: white;
             border: none;
-            padding: 14px;
-            border-radius: 6px;
+            padding: 15px;
+            border-radius: 8px;
             width: 100%;
             font-weight: bold;
-            font-size: 15px;
+            font-size: 16px;
             cursor: pointer;
             box-sizing: border-box;
-            box-shadow: 0 2px 5px rgba(26,115,232,0.3);
+            box-shadow: 0 4px 10px rgba(26,115,232,0.3);
+            display: block;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        button:hover { background: #1557b0; }
+        .btn-drive:active {
+            background: #1557b0;
+        }
     </style>
 </head>
 <body>
@@ -57,8 +57,10 @@
 <div class="box" id="hpBox">
     <div style="font-size: 50px;">📲</div>
     <h2>Membuka Google Drive...</h2>
-    <p>Jika aplikasi Google Drive tidak terbuka secara otomatis dalam 3 detik, silakan klik tombol di bawah ini untuk masuk.</p>
-    <button onclick="bukaDriveManual()">Buka Aplikasi Drive</button>
+    <p>Jika aplikasi Google Drive tidak terbuka secara otomatis, silakan klik tombol di bawah ini untuk masuk.</p>
+    
+    <!-- Perbaikan: Menggunakan tag Anchor dengan ontouchstart agar instan merespon di HP -->
+    <a href="#" id="linkDrive" class="btn-drive" ontouchstart="bukaDriveManual(event)" onclick="bukaDriveManual(event)">Buka Aplikasi Drive</a>
 </div>
 
 <!-- Tampilan Blokir untuk Laptop -->
@@ -75,7 +77,6 @@
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
     const webFallback = `https://google.com{folderId}`;
 
-    // Fungsi utama untuk memicu aplikasi eksternal
     function dlink() {
         if (isAndroid) {
             return `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;S.browser_fallback_url=${encodeURIComponent(webFallback)};end;`;
@@ -85,9 +86,12 @@
         return webFallback;
     }
 
-    // Fungsi jika tombol diklik manual
-    function bukaDriveManual() {
+    // Fungsi eksekusi tombol manual saat disentuh jari
+    function bukaDriveManual(e) {
+        if(e) e.preventDefault();
+        
         window.location.href = dlink();
+        
         if (isIOS) {
             setTimeout(function() { window.location.href = webFallback; }, 1500);
         }
@@ -96,16 +100,17 @@
     // Eksekusi otomatis saat halaman dimuat
     (function inisialisasi() {
         if (isAndroid || isIOS) {
-            // Tampilkan box HP
             document.getElementById("hpBox").style.display = "block";
             
-            // Coba alihkan otomatis terlebih dahulu rizki ade putra
+            // Set link href cadangan pada tombol
+            document.getElementById("linkDrive").href = dlink();
+            
+            // Coba arahkan otomatis di awal
             window.location.href = dlink();
             if (isIOS) {
                 setTimeout(function() { window.location.href = webFallback; }, 1500);
             }
         } else {
-            // Jika laptop, sembunyikan box HP dan tampilkan blocker
             document.getElementById("hpBox").style.display = "none";
             document.getElementById("laptopBlocker").style.display = "block";
         }
