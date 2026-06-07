@@ -5,7 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Proteksi Akses Perangkat</title>
     <style>
-        /* Desain minimalis untuk memblokir tampilan Laptop */
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: #f0f4f9;
@@ -16,54 +22,91 @@
             margin: 0;
             text-align: center;
         }
-        .error-box {
+        .box {
             background: white;
             padding: 40px 30px;
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             max-width: 360px;
             width: 90%;
-            display: none; /* Sembunyikan secara bawaan, hanya muncul di laptop */
+            box-sizing: border-box;
         }
-        h2 { color: #d93025; font-size: 22px; margin-top: 15px; }
-        p { color: #5f6368; font-size: 14px; line-height: 1.5; }
+        .error-box { display: none; }
+        h2 { color: #1a73e8; font-size: 20px; margin-top: 15px; margin-bottom: 8px; }
+        .error-box h2 { color: #d93025; }
+        p { color: #5f6368; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
+        button {
+            background: #1a73e8;
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 6px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            box-sizing: border-box;
+            box-shadow: 0 2px 5px rgba(26,115,232,0.3);
+        }
+        button:hover { background: #1557b0; }
     </style>
 </head>
 <body>
 
-<div class="error-box" id="laptopBlocker">
-    <div style="font-size: 60px;">🚫</div>
+<!-- Tampilan untuk Pengguna Handphone -->
+<div class="box" id="hpBox">
+    <div style="font-size: 50px;">📲</div>
+    <h2>Membuka Google Drive...</h2>
+    <p>Jika aplikasi Google Drive tidak terbuka secara otomatis dalam 3 detik, silakan klik tombol di bawah ini untuk masuk.</p>
+    <button onclick="bukaDriveManual()">Buka Aplikasi Drive</button>
+</div>
+
+<!-- Tampilan Blokir untuk Laptop -->
+<div class="box error-box" id="laptopBlocker">
+    <div style="font-size: 50px;">🚫</div>
     <h2>Akses Ditolak!</h2>
     <p>Demi keamanan data, perangkat Komputer atau Laptop <b>dilarang keras</b> mengakses folder ini. Silakan gunakan Handphone Anda.</p>
 </div>
 
 <script>
-    // ID Folder Google Drive Anda
     const folderId = "1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
-
-    // Deteksi tipe sistem operasi perangkat
     const ua = navigator.userAgent;
     const isAndroid = /Android/i.test(ua);
     const isIOS = /iPhone|iPad|iPod/i.test(ua);
+    const webFallback = `https://google.com{folderId}`;
 
-    // Jalankan sistem proteksi saat halaman dimuat
-    (function proteksiDanArahkan() {
-        const webFallback = `https://google.com{folderId}`;
-
+    // Fungsi utama untuk memicu aplikasi eksternal
+    function dlink() {
         if (isAndroid) {
-            // HP Android: Paksa panggil aplikasi Google Drive via Deep Link Intent
-            const androidIntent = `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;S.browser_fallback_url=${encodeURIComponent(webFallback)};end;`;
-            window.location.replace(androidIntent);
+            return `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;S.browser_fallback_url=${encodeURIComponent(webFallback)};end;`;
         } else if (isIOS) {
-            // HP iPhone/iPad: Panggil skema aplikasi Google Drive iOS
-            window.location.replace(`googledrive://drive/folders/${folderId}`);
+            return `googledrive://drive/folders/${folderId}`;
+        }
+        return webFallback;
+    }
+
+    // Fungsi jika tombol diklik manual
+    function bukaDriveManual() {
+        window.location.href = dlink();
+        if (isIOS) {
+            setTimeout(function() { window.location.href = webFallback; }, 1500);
+        }
+    }
+
+    // Eksekusi otomatis saat halaman dimuat
+    (function inisialisasi() {
+        if (isAndroid || isIOS) {
+            // Tampilkan box HP
+            document.getElementById("hpBox").style.display = "block";
             
-            // Cadangan jika aplikasi Drive tidak terinstal di iPhone, lempar ke Safari
-            setTimeout(function() {
-                window.location.replace(webFallback);
-            }, 1000);
+            // Coba alihkan otomatis terlebih dahulu rizki ade putra
+            window.location.href = dlink();
+            if (isIOS) {
+                setTimeout(function() { window.location.href = webFallback; }, 1500);
+            }
         } else {
-            // Jika Perangkat berupa Laptop, Komputer, atau Mac: Kunci halaman!
+            // Jika laptop, sembunyikan box HP dan tampilkan blocker
+            document.getElementById("hpBox").style.display = "none";
             document.getElementById("laptopBlocker").style.display = "block";
         }
     })();
