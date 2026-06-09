@@ -53,7 +53,7 @@
 </head>
 <body>
 
-    <!-- TAMPILAN JIKA DIBUKA DI LAPTOP / PC (AKSES DITOLAK) -->
+    <!-- TAMPILAN BLOKIR: JIKA DIBUKA DI LAPTOP / PC -->
     <div id="desktop-message" class="container error-box">
         <div class="icon">🚫</div>
         <h1>Akses Ditolak!</h1>
@@ -61,19 +61,19 @@
         <p>Silakan buka link ini kembali khusus melalui perangkat HP (Smartphone) Anda.</p>
     </div>
 
-    <!-- TAMPILAN JIKA DIBUKA DI HP / SMARTPHONE (LOLOS VERIFIKASI) -->
+    <!-- TAMPILAN LOLOS: JIKA DIBUKA DI HP / SMARTPHONE -->
     <div id="mobile-message" class="container success-box">
         <div class="icon">📱</div>
         <h1>Verifikasi Berhasil!</h1>
         <p>Perangkat Anda terdeteksi sebagai Smartphone.</p>
         <p>Silakan klik tombol di bawah untuk langsung membuka folder di aplikasi Google Drive Anda.</p>
         
-        <!-- Tombol fisik wajib untuk memicu pembukaan aplikasi -->
+        <!-- Tombol fisik pemicu pembukaan aplikasi -->
         <a id="drive-link" href="#" class="btn-drive">Buka Aplikasi Google Drive</a>
     </div>
 
     <script>
-        // ID Folder Google Drive Anda
+        // ID Folder Baru Anda dari link: https://drive.google.com/drive/folders/1dow1h8k1-fYN14_omO8NGKr5L3yfe49b
         const FOLDER_ID = "1dow1h8k1-fYN14_omO8NGKr5L3yfe49b";
 
         // Deteksi agen perangkat (User Agent)
@@ -81,24 +81,22 @@
         const isMobile = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
 
         if (isMobile) {
-            // Tampilkan kotak sukses khusus HP
+            // Tampilkan panel sukses khusus HP
             document.getElementById("mobile-message").style.display = "block";
-            
             const driveLinkElement = document.getElementById("drive-link");
 
-            // Format link universal yang memaksa sistem HP memunculkan pilihan "Buka dengan Google Drive"
             if (/android/i.test(userAgent)) {
-                // Protokol Intent resmi Android (Sangat ampuh memicu aplikasi)
+                // Protokol Android Intent Resmi (Memaksa sistem Android meluncurkan aplikasi Google Drive Paket com.google.android.apps.docs)
                 driveLinkElement.href = "intent://drive.google.com/drive/folders/" + FOLDER_ID + "#Intent;scheme=https;package=com.google.android.apps.docs;end";
             } else if (/iphone|ipad|ipod/i.test(userAgent)) {
-                // Protokol deep link iOS khusus aplikasi Drive
-                driveLinkElement.href = "googledrive://drive/folders/" + FOLDER_ID;
+                // Format Hibrida Protokol Apple khusus aplikasi Drive (Memaksa iOS memotong tautan dan membuka aplikasi)
+                driveLinkElement.href = "googledrive://https://drive.google.com/drive/folders/" + FOLDER_ID;
             } else {
-                // Tautan standar jika OS mobile lainnya
+                // Tautan standar untuk OS mobile lainnya sebagai cadangan
                 driveLinkElement.href = "https://drive.google.com/drive/folders/" + FOLDER_ID;
             }
         } else {
-            // Tampilkan kotak blokir jika dibuka di PC / Laptop
+            // Tampilkan panel blokir jika perangkat yang terdeteksi adalah Laptop / PC Desktop
             document.getElementById("desktop-message").style.display = "block";
         }
     </script>
