@@ -3,118 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Proteksi Akses Perangkat</title>
+    <title>Memuat Dokumen...</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: #f0f4f9;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             text-align: center;
+            padding: 50px 20px;
+            background-color: #f8f9fa;
+            color: #333;
         }
-        .box {
+        .error-box {
+            display: none;
             background: white;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            max-width: 360px;
-            width: 90%;
-            box-sizing: border-box;
+            padding: 35px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-width: 400px;
+            margin: 50px auto;
+            border-top: 5px solid #d9534f;
         }
-        .error-box { display: none; }
-        h2 { color: #1a73e8; font-size: 20px; margin-top: 15px; margin-bottom: 8px; }
-        .error-box h2 { color: #d93025; }
-        p { color: #5f6368; font-size: 13px; line-height: 1.5; margin-bottom: 20px; }
-        
-        /* Optimasi tombol khusus HP agar responsif saat disentuh */
-        .btn-drive {
-            background: #1a73e8;
-            color: white;
-            border: none;
-            padding: 15px;
-            border-radius: 8px;
-            width: 100%;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            box-sizing: border-box;
-            box-shadow: 0 4px 10px rgba(26,115,232,0.3);
-            display: block;
-            text-decoration: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-drive:active {
-            background: #1557b0;
-        }
+        h1 { color: #d9534f; font-size: 22px; margin-top: 0; }
+        p { color: #666; line-height: 1.5; font-size: 15px; }
+        .icon { font-size: 48px; margin-bottom: 15px; }
+        .loading { font-size: 16px; color: #4285F4; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<!-- Tampilan untuk Pengguna Handphone -->
-<div class="box" id="hpBox">
-    <div style="font-size: 50px;">📲</div>
-    <h2>Membuka Google Drive...</h2>
-    <p>Jika aplikasi Google Drive tidak terbuka secara otomatis, silakan klik tombol di bawah ini untuk masuk.</p>
-    
-    <!-- Perbaikan: Menggunakan tag Anchor dengan ontouchstart agar instan merespon di HP -->
-    <a href="#" id="linkDrive" class="btn-drive" ontouchstart="bukaDriveManual(event)" onclick="bukaDriveManual(event)">Buka Aplikasi Drive</a>
-</div>
+    <!-- Tampilan jika dibuka di Laptop / PC -->
+    <div id="desktop-message" class="error-box">
+        <div class="icon">🚫</div>
+        <h1>Akses Ditolak!</h1>
+        <p>Demi keamanan data, folder ini <strong>hanya dapat diakses melalui aplikasi resmi Google Drive di HP</strong> (Smartphone).</p>
+        <p>Silakan pindai QR Code atau buka link ini langsung dari HP Anda.</p>
+    </div>
 
-<!-- Tampilan Blokir untuk Laptop -->
-<div class="box error-box" id="laptopBlocker">
-    <div style="font-size: 50px;">🚫</div>
-    <h2>Akses Ditolak!</h2>
-    <p>Demi keamanan data, perangkat Komputer atau Laptop <b>dilarang keras</b> mengakses folder ini. Silakan gunakan Handphone Anda.</p>
-</div>
+    <!-- Tampilan loading sementara khusus pengguna HP -->
+    <div id="loading-message">
+        <div class="loading">Membuka Aplikasi Google Drive...</div>
+    </div>
 
-<script>
-    const folderId = "1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
-    const ua = navigator.userAgent;
-    const isAndroid = /Android/i.test(ua);
-    const isIOS = /iPhone|iPad|iPod/i.test(ua);
-    const webFallback = `https://google.com{folderId}`;
+    <script>
+        // ID Folder Google Drive Anda
+        const FOLDER_ID = "1mzLtwhunAhuerKIHWq7vrbvJnTVBg3sF";
 
-    function dlink() {
-        if (isAndroid) {
-            return `intent://://google.com{folderId}#Intent;scheme=https;package=com.google.android.apps.docs;S.browser_fallback_url=${encodeURIComponent(webFallback)};end;`;
-        } else if (isIOS) {
-            return `googledrive://drive/folders/${folderId}`;
-        }
-        return webFallback;
-    }
-
-    // Fungsi eksekusi tombol manual saat disentuh jari
-    function bukaDriveManual(e) {
-        if(e) e.preventDefault();
+        // Deteksi agen perangkat (User Agent)
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
         
-        window.location.href = dlink();
-        
-        if (isIOS) {
-            setTimeout(function() { window.location.href = webFallback; }, 1500);
-        }
-    }
+        // Cek apakah perangkat adalah HP (Android / iOS / Windows Phone)
+        const isMobile = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
 
-    // Eksekusi otomatis saat halaman dimuat
-    (function inisialisasi() {
-        if (isAndroid || isIOS) {
-            document.getElementById("hpBox").style.display = "block";
-            
-            // Set link href cadangan pada tombol
-            document.getElementById("linkDrive").href = dlink();
-            
-            // Coba arahkan otomatis di awal
-            window.location.href = dlink();
-            if (isIOS) {
-                setTimeout(function() { window.location.href = webFallback; }, 1500);
+        if (isMobile) {
+            // Jalur Deep Link untuk memaksa membuka aplikasi Google Drive secara langsung
+            const driveAppUrl = "googledrive://drive/folders/" + FOLDER_ID; // Protokol iOS
+            const intentUrl = "intent://://google.com" + FOLDER_ID + "#Intent;scheme=https;package=com.google.android.apps.docs;end"; // Protokol Android
+
+            if (/android/i.test(userAgent)) {
+                // Paksa HP Android langsung membuka aplikasi Drive
+                window.location.href = intentUrl;
+            } else if (/iphone|ipad|ipod/i.test(userAgent)) {
+                // Paksa iPhone/iPad langsung membuka aplikasi Drive
+                window.location.href = driveAppUrl;
+                
+                // Antisipasi cadangan jika aplikasi Google Drive belum terinstal di iPhone
+                setTimeout(function() {
+                    window.location.href = "https://://google.com" + FOLDER_ID;
+                }, 1500);
+            } else {
+                // Browser HP lainnya
+                window.location.href = "https://://google.com" + FOLDER_ID;
             }
         } else {
-            document.getElementById("hpBox").style.display = "none";
-            document.getElementById("laptopBlocker").style.display = "block";
+            // Jika diakses menggunakan Laptop/PC, sembunyikan loading dan tampilkan blokir
+            document.getElementById("loading-message").style.display = "none";
+            document.getElementById("desktop-message").style.display = "block";
         }
-    })();
-</script>
+    </script>
 </body>
 </html>
