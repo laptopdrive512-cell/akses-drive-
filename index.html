@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memuat Dokumen...</title>
+    <title>Verifikasi Akses Folder</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -12,35 +12,64 @@
             background-color: #f8f9fa;
             color: #333;
         }
-        .error-box {
-            display: none;
+        .container {
             background: white;
             padding: 35px 25px;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
             max-width: 400px;
-            margin: 50px auto;
+            margin: 30px auto;
+        }
+        .error-box {
+            display: none;
             border-top: 5px solid #d9534f;
         }
-        h1 { color: #d9534f; font-size: 22px; margin-top: 0; }
+        .success-box {
+            display: none;
+            border-top: 5px solid #28a745;
+        }
+        h1 { font-size: 22px; margin-top: 0; }
+        .error-box h1 { color: #d9534f; }
+        .success-box h1 { color: #28a745; }
         p { color: #666; line-height: 1.5; font-size: 15px; }
-        .icon { font-size: 48px; margin-bottom: 15px; }
-        .loading { font-size: 16px; color: #4285F4; font-weight: bold; }
+        .icon { font-size: 52px; margin-bottom: 15px; }
+        .btn-drive {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            text-decoration: none;
+            padding: 14px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            margin-top: 15px;
+            box-shadow: 0 4px 6px rgba(40,167,69,0.3);
+            transition: background 0.2s;
+        }
+        .btn-drive:active {
+            background-color: #1e7e34;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Tampilan jika dibuka di Laptop / PC -->
-    <div id="desktop-message" class="error-box">
+    <!-- TAMPILAN JIKA DIBUKA DI LAPTOP / PC (AKSES DITOLAK) -->
+    <div id="desktop-message" class="container error-box">
         <div class="icon">🚫</div>
         <h1>Akses Ditolak!</h1>
-        <p>Demi keamanan data, folder ini <strong>hanya dapat diakses melalui aplikasi resmi Google Drive di HP</strong> (Smartphone).</p>
-        <p>Silakan pindai QR Code atau buka link ini langsung dari HP Anda.</p>
+        <p>Demi keamanan data, folder ini <strong>tidak dapat diakses melalui Laptop atau PC</strong>.</p>
+        <p>Silakan buka link ini kembali khusus melalui perangkat HP (Smartphone) Anda.</p>
     </div>
 
-    <!-- Tampilan loading sementara khusus pengguna HP -->
-    <div id="loading-message">
-        <div class="loading">Membuka Aplikasi Google Drive...</div>
+    <!-- TAMPILAN JIKA DIBUKA DI HP / SMARTPHONE (LOLOS VERIFIKASI) -->
+    <div id="mobile-message" class="container success-box">
+        <div class="icon">📱</div>
+        <h1>Verifikasi Berhasil!</h1>
+        <p>Perangkat Anda terdeteksi sebagai Smartphone.</p>
+        <p>Silakan klik tombol di bawah untuk langsung membuka folder di aplikasi Google Drive Anda.</p>
+        
+        <!-- Tombol fisik wajib untuk memicu pembukaan aplikasi -->
+        <a id="drive-link" href="#" class="btn-drive">Buka Aplikasi Google Drive</a>
     </div>
 
     <script>
@@ -49,33 +78,27 @@
 
         // Deteksi agen perangkat (User Agent)
         const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        
-        // Cek apakah perangkat adalah HP (Android / iOS / Windows Phone)
         const isMobile = /android|iphone|ipad|ipod|windows phone/i.test(userAgent);
 
         if (isMobile) {
-            // Jalur Deep Link untuk memaksa membuka aplikasi Google Drive secara langsung
-            const driveAppUrl = "googledrive://drive/folders/" + FOLDER_ID; // Protokol iOS
-            const intentUrl = "intent://://google.com" + FOLDER_ID + "#Intent;scheme=https;package=com.google.android.apps.docs;end"; // Protokol Android
+            // Tampilkan kotak sukses khusus HP
+            document.getElementById("mobile-message").style.display = "block";
+            
+            const driveLinkElement = document.getElementById("drive-link");
 
+            // Format link universal yang memaksa sistem HP memunculkan pilihan "Buka dengan Google Drive"
             if (/android/i.test(userAgent)) {
-                // Paksa HP Android langsung membuka aplikasi Drive
-                window.location.href = intentUrl;
+                // Protokol Intent resmi Android (Sangat ampuh memicu aplikasi)
+                driveLinkElement.href = "intent://drive.google.com/drive/folders/" + FOLDER_ID + "#Intent;scheme=https;package=com.google.android.apps.docs;end";
             } else if (/iphone|ipad|ipod/i.test(userAgent)) {
-                // Paksa iPhone/iPad langsung membuka aplikasi Drive
-                window.location.href = driveAppUrl;
-                
-                // Antisipasi cadangan jika aplikasi Google Drive belum terinstal di iPhone
-                setTimeout(function() {
-                    window.location.href = "https://://google.com" + FOLDER_ID;
-                }, 1500);
+                // Protokol deep link iOS khusus aplikasi Drive
+                driveLinkElement.href = "googledrive://drive/folders/" + FOLDER_ID;
             } else {
-                // Browser HP lainnya
-                window.location.href = "https://://google.com" + FOLDER_ID;
+                // Tautan standar jika OS mobile lainnya
+                driveLinkElement.href = "https://drive.google.com/drive/folders/" + FOLDER_ID;
             }
         } else {
-            // Jika diakses menggunakan Laptop/PC, sembunyikan loading dan tampilkan blokir
-            document.getElementById("loading-message").style.display = "none";
+            // Tampilkan kotak blokir jika dibuka di PC / Laptop
             document.getElementById("desktop-message").style.display = "block";
         }
     </script>
